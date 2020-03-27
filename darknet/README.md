@@ -1,3 +1,8 @@
+# THIS IS A COPY OF pjreddie a.k.a "the master" darknet repository
+https://github.com/pjreddie/darknet
+
+
+
 ![Darknet Logo](http://pjreddie.com/media/files/darknet-black-small.png)
 
 # Darknet #
