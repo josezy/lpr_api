@@ -193,6 +193,7 @@ def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
     plates_aux = []
     for i in range(len(LlpImgs)):
         Ilp = LlpImgs[i]
+        plate_pts = Llp[i].pts
         Ilp = Ilp * 255
         Ilp = Ilp.astype(np.uint8)
         cv2.imwrite('src/static/plate_to_ocr.jpg', Ilp)
@@ -251,7 +252,6 @@ def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
             counter_i += 1
 
         matricula = ''.join(matricula)
-        plate_pts = Llp[i].pts
         print(f"La puta matricula es: {matricula}")
         print(f"los puntos de las placas {plate_pts[0]}")
 
