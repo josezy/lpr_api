@@ -4,7 +4,6 @@ import cv2
 from lpr.src.keras_utils import load_model, detect_lp
 from lpr.src.utils import im2single
 import numpy as np
-from datetime import datetime
 
 
 def sample(probs):
@@ -252,6 +251,7 @@ def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
             counter_i += 1
 
         matricula = ''.join(matricula)
+        plate_pts = Llp[i].pts
         print(f"La puta matricula es: {matricula}")
         print(f"los puntos de las placas {plate_pts[0]}")
 

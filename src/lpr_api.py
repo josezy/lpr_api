@@ -1,4 +1,6 @@
 import os
+import cv2
+
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 
