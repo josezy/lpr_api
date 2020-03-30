@@ -1,5 +1,4 @@
 from ctypes import *
-import math
 import random
 import cv2
 from lpr.src.keras_utils import load_model, detect_lp
@@ -10,17 +9,17 @@ from datetime import datetime
 
 def sample(probs):
     s = sum(probs)
-    probs = [a/s for a in probs]
+    probs = [a / s for a in probs]
     r = random.uniform(0, 1)
     for i in range(len(probs)):
         r = r - probs[i]
         if r <= 0:
             return i
-    return len(probs)-1
+    return len(probs) - 1
 
 
 def c_array(ctype, values):
-    arr = (ctype*len(values))()
+    arr = (ctype * len(values))()
     arr[:] = values
     return arr
 
@@ -53,8 +52,6 @@ class METADATA(Structure):
                 ("names", POINTER(c_char_p))]
 
 
-#lib = CDLL("/home/pjreddie/documents/darknet/libdarknet.so", RTLD_GLOBAL)
-#lib = CDLL("/home/pi/DARKNET_RPI/darknet_that_works/libdarknet.so", RTLD_GLOBAL)
 lib = CDLL("darknet/libdarknet.so", RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
@@ -73,8 +70,10 @@ make_image.argtypes = [c_int, c_int, c_int]
 make_image.restype = IMAGE
 
 get_network_boxes = lib.get_network_boxes
-get_network_boxes.argtypes = [c_void_p, c_int, c_int,
-                              c_float, c_float, POINTER(c_int), c_int, POINTER(c_int)]
+get_network_boxes.argtypes = [
+    c_void_p, c_int, c_int, c_float, c_float,
+    POINTER(c_int), c_int, POINTER(c_int)
+]
 get_network_boxes.restype = POINTER(DETECTION)
 
 make_network_boxes = lib.make_network_boxes
@@ -176,33 +175,26 @@ def load_plate_models():
     return net, meta, wpod_net
 
 
-
 def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
+    ratio = float(max(frame.shape[:2])) / min(frame.shape[:2])
 
-    ratio = float(max(frame.shape[:2]))/min(frame.shape[:2])
-    
-    temp_plates=[]
-    temp_counter_plates=[]
-    temp_timestamp=[]
-    side  = int(ratio*288.)
-    bound_dim = min(side + (side%(2**4)),608.)
+    side = int(ratio * 288)
+    bound_dim = min(side + (side % (2**4)), 608)
 
     print("\t\tBound dim: %d, ratio: %f" % (bound_dim, ratio))
     Llp, LlpImgs, _ = detect_lp(wpod_net, im2single(
         frame), bound_dim, 2**4, (240, 80), lp_threshold)
-    # print("Llp[0]")
-    # print(Llp[0])
+
     print(frame.shape)
     plates = {
-	"image_width":frame.shape[0],
-	"image_height":frame.shape[1],
-	"plates":[]
+        "image_width": frame.shape[0],
+        "image_height": frame.shape[1],
+        "plates": []
     }
-    plates_aux=[]
+    plates_aux = []
     for i in range(len(LlpImgs)):
         Ilp = LlpImgs[i]
-        plate_pts = Llp[i].pts
-        Ilp = Ilp*255
+        Ilp = Ilp * 255
         Ilp = Ilp.astype(np.uint8)
         cv2.imwrite('src/static/plate_to_ocr.jpg', Ilp)
         r = detect(net, meta, b"src/static/plate_to_ocr.jpg", letter_threshold)
@@ -214,20 +206,21 @@ def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
             box = [int(kk) for kk in det[2]]
             cv2.rectangle(
                 Ilp,
-                (int(box[0]-box[2]/2), int(box[1]-box[3]/2)),
-                (int(box[0]+box[2]/2), int(box[1]+box[3]/2)),
+                (int(box[0] - box[2] / 2), int(box[1] - box[3] / 2)),
+                (int(box[0] + box[2] / 2), int(box[1] + box[3] / 2)),
                 (0, 255, 0),
                 3
             )
 
-            cv2.putText(Ilp,
-                        str(det[0])[2],
-                        (int(box[0]), int(box[1])),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (255, 255, 255),
-                        1
-                        )
+            cv2.putText(
+                Ilp,
+                str(det[0])[2],
+                (int(box[0]), int(box[1])),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (255, 255, 255),
+                1
+            )
             cv2.imwrite('src/static/plate_proccesed.jpg', Ilp)
         while 0 in posicion:
             posicion.remove(0)
@@ -236,12 +229,11 @@ def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
 #        print(desorganizado)
 
         matricula = []
-        bad_format=False
-        counter_i=0
-	
+        counter_i = 0
+
         for i in posicion:
 
-            Letter=str(letra[desorganizado.index(i)])[2]
+            Letter = str(letra[desorganizado.index(i)])[2]
             '''if counter_i <3:
                 try:
                     a=int(Letter)+3
@@ -249,7 +241,7 @@ def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
                     break
                 except:
                     a=1
-            else:                        
+            else:
                 try:
                     int(Letter)
                 except:
@@ -257,25 +249,25 @@ def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
                     break'''
 
             matricula.append(Letter)
-            counter_i+=1
-        
-        #if len(matricula)==6 and not bad_format:
+            counter_i += 1
 
-        matricula=''.join(matricula)
+        matricula = ''.join(matricula)
         print(f"La puta matricula es: {matricula}")
         print(f"los puntos de las placas {plate_pts[0]}")
-        aux_json={
-             "upper_left":[int(plate_pts[0][0]*frame.shape[0]),int(plate_pts[0][1]*frame.shape[0])],
-             "down_right":[int(plate_pts[0][2]*frame.shape[0]),int(plate_pts[0][3]*frame.shape[1])],
-             "plate":matricula
-                
-        }	
-        
-        plates_aux.append(aux_json)
-        cv2.imwrite(f"src/static/detection_photo.jpg",frame)
-    
-    plates["plates"]=plates_aux
+
+        plates_aux.append({
+            "upper_left": [
+                int(plate_pts[0][0] * frame.shape[0]),
+                int(plate_pts[0][1] * frame.shape[0])
+            ],
+            "down_right": [
+                int(plate_pts[0][2] * frame.shape[0]),
+                int(plate_pts[0][3] * frame.shape[1])
+            ],
+            "plate": matricula
+        })
+        cv2.imwrite(f"src/static/detection_photo.jpg", frame)
+
+    plates["plates"] = plates_aux
     print(plates)
     return plates
-
-# for det in r[0]:
