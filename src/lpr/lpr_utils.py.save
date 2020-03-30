@@ -176,16 +176,17 @@ def load_plate_models():
     return net, meta, wpod_net
 
 
+temp_plates=[]
+temp_counter_plates=[]
+temp_timestamp=[]
 
 def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
 
     ratio = float(max(frame.shape[:2]))/min(frame.shape[:2])
     
-    temp_plates=[]
-    temp_counter_plates=[]
-    temp_timestamp=[]
-    side  = int(ratio*288.)
-    bound_dim = min(side + (side%(2**4)),608.)
+    
+    side = int(ratio*288.)
+    bound_dim = min(side + (side % (2**4)), 608.-60)
 
     print("\t\tBound dim: %d, ratio: %f" % (bound_dim, ratio))
     Llp, LlpImgs, _ = detect_lp(wpod_net, im2single(
@@ -193,12 +194,7 @@ def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
     # print("Llp[0]")
     # print(Llp[0])
     print(frame.shape)
-    plates = {
-	"image_width":frame.shape[0],
-	"image_height":frame.shape[1],
-	"plates":[]
-    }
-    plates_aux=[]
+    plates = []
     for i in range(len(LlpImgs)):
         Ilp = LlpImgs[i]
         plate_pts = Llp[i].pts
@@ -260,22 +256,24 @@ def detect_plates(frame, net, meta, wpod_net, lp_threshold, letter_threshold):
             counter_i+=1
         
         #if len(matricula)==6 and not bad_format:
-
-        matricula=''.join(matricula)
-        print(f"La puta matricula es: {matricula}")
-        print(f"los puntos de las placas {plate_pts[0]}")
-        aux_json={
-             "upper_left":[int(plate_pts[0][0]*frame.shape[0]),int(plate_pts[0][1]*frame.shape[0])],
-             "down_right":[int(plate_pts[0][2]*frame.shape[0]),int(plate_pts[0][3]*frame.shape[1])],
-             "plate":matricula
+        if not bad_format:
+            matricula=''.join(matricula)
+            print(matricula)
+            if matricula in temp_plates:
+                temp_counter_plates[temp_plates.index(matricula)]+=1
+            else:
+                temp_plates.append(matricula)
+                temp_counter_plates.append(0)
+                temp_timestamp.append(datetime.now()) 
+                aux_json={
+                    "upper_left":[0,0],
+                    "down_right":[0,0],
+                    "plate":matricula
                 
-        }	
-        
-        plates_aux.append(aux_json)
+                }	
+                plates.append(aux_json)
         cv2.imwrite(f"src/static/detection_photo.jpg",frame)
-    
-    plates["plates"]=plates_aux
-    print(plates)
+        print(plates)
     return plates
 
 # for det in r[0]:
