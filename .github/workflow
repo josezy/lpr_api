@@ -1,0 +1,11 @@
+---
+name: Build docker image and push to AWS ECR
+on: [push]
+
+jobs:
+    test:
+        name: Build and push
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
