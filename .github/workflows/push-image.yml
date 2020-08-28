@@ -10,10 +10,6 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v2
 
-            - name: Build docker image
-              run: |
-                docker build .
-
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -25,3 +21,17 @@ jobs:
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v1
 
+            - name: Build, tag, and push image to amazon ECR
+              env:
+                ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                ECR_REPOSITORY: github-actions
+                IMAGE_TAG: ${{ github.sha }}
+              run: |
+                docker build -t $ECR_REGISTRY/$ECR_REPOSITORY .
+                docker push $ECR_REGISTRY/$ECR_REPOSITORY
+                docker tag $ECR_REGISTRY/$ECR_REPOSITORY $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+            - name: Logout of amazon ECR
+              if: always()
+              run: docker logout ${{ steps.login-ecr.outputs.registry }}
