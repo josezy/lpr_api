@@ -10,6 +10,6 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v2
 
-            - name: Build image
+            - name: Build docker image
               run: |
                 docker build .
