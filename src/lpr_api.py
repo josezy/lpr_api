@@ -40,7 +40,7 @@ def not_busy():
         data['flag_occupied'] = "NOT BUSY"
         json.dump(data, json_file)
 
-    print("NOT BUSY")
+    print("NOT BUSY", flush=True)
 
 
 @app.route('/detect/', methods=['POST'])
@@ -71,8 +71,8 @@ def upload_file():
         img = cv2.imread(f"./{filename}")
 
         detections = do_detect(img)
-        print("\ndetections")
-        print(detections)
+        print("\ndetections", flush=True)
+        print(detections, flush=True)
         resp = jsonify({'message': detections})
         resp.status_code = 201
         not_busy()
